@@ -53,11 +53,11 @@ python app.py
 
 Future Enhancements
 
--Integration with OpenAI/Anthropic APIs
-- PDF file upload support
--ATS keyword optimization
--Multiple resume format exports
--User authentication and history
+- [ ] Integration with OpenAI/Anthropic APIs
+- [ ] PDF file upload support
+- [ ] ATS keyword optimization
+- [ ] Multiple resume format exports
+- [ ] User authentication and history
 
 Author
 
