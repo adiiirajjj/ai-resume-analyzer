@@ -4,6 +4,12 @@ A web application that analyzes resumes and provides actionable feedback to help
 
 <img width="412" height="714" alt="Image" src="https://github.com/user-attachments/assets/ed10b729-0018-41e6-a504-6e920963028e" />
 
+Live Demo
+
+Coming soon! (Will be deployed on Render)
+
+Or run locally following the installation steps below.
+
 Features
 
 - Upload resume text for instant analysis
