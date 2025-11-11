@@ -141,6 +141,7 @@
             color: #667eea;
             display: none;
             margin-top: 20px;
+            font-size: 16px;
         }
         
         .error {
@@ -156,7 +157,7 @@
 <body>
     <div class="container">
         <h1>🚀 AI Resume Analyzer</h1>
-        <p class="subtitle">Get instant feedback on your resume powered by AI</p>
+        <p class="subtitle">Get instant AI-powered feedback on your resume</p>
         
         <form id="resumeForm">
             <label for="job_role">Target Job Role</label>
@@ -169,7 +170,7 @@
         </form>
         
         <div class="loading" id="loading">
-            <p>🤖 Analyzing your resume...</p>
+            <p>🤖 AI is analyzing your resume... (This may take 10-15 seconds)</p>
         </div>
         
         <div class="error" id="error"></div>
@@ -222,13 +223,12 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Display results
                     displayResults(data.analysis);
                 } else {
                     throw new Error(data.error || 'Analysis failed');
                 }
             } catch (err) {
-                error.textContent = err.message;
+                error.textContent = 'Error: ' + err.message;
                 error.style.display = 'block';
             } finally {
                 loading.style.display = 'none';

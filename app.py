@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 import os
-from anthropic import Anthropic
 
 app = Flask(__name__)
 
@@ -36,48 +35,85 @@ def analyze_resume():
 
 def analyze_with_ai(resume_text, job_role):
     """
-    Analyzes resume text and provides feedback.
-    Currently using rule-based analysis.
+    Analyzes resume using Hugging Face's free AI models
     """
+    from huggingface_hub import InferenceClient
+    import json
     import re
     
-    # Simple analysis based on content
-    word_count = len(resume_text.split())
-    has_email = bool(re.search(r'\S+@\S+', resume_text))
-    has_phone = bool(re.search(r'\d{10}|\d{3}[-.\s]\d{3}[-.\s]\d{4}', resume_text))
-    has_projects = 'project' in resume_text.lower()
-    has_metrics = bool(re.search(r'\d+%|\d+x', resume_text))
+    # Rule-based fallback function
+    def rule_based_analysis(text, role):
+        word_count = len(text.split())
+        has_metrics = bool(re.search(r'\d+%|\d+x|\d+\+', text))
+        has_projects = 'project' in text.lower()
+        has_email = bool(re.search(r'\S+@\S+', text))
+        
+        score = 6
+        if word_count > 200: score += 1
+        if has_metrics: score += 1.5
+        if has_projects: score += 1
+        if has_email: score += 0.5
+        
+        return {
+            'score': round(min(10, score), 1),
+            'strengths': [
+                f'Resume length is appropriate ({word_count} words)',
+                'Contact information included' if has_email else 'Clear structure',
+                'Shows relevant experience' if has_projects else 'Professional formatting'
+            ],
+            'weaknesses': [
+                'Add more quantifiable achievements with numbers' if not has_metrics else 'Could include more metrics',
+                'Include specific projects with tech stack' if not has_projects else 'Expand on project impact',
+                f'Optimize for {role} keywords and ATS systems'
+            ],
+            'suggestions': [
+                'Add 2-3 technical projects with GitHub links',
+                'Include metrics (e.g., "Improved performance by 40%")',
+                'Add a professional summary (3-4 lines) at the top',
+                f'Include {role}-specific technical keywords',
+                'Ensure all sections have quantifiable achievements'
+            ]
+        }
     
-    # Calculate score
-    score = 5
-    if word_count > 200: score += 1
-    if has_email: score += 1
-    if has_phone: score += 0.5
-    if has_projects: score += 1
-    if has_metrics: score += 1.5
-    
-    score = min(10, score)
-    
-    return {
-        'score': round(score, 1),
-        'strengths': [
-            f'Resume length is {"appropriate" if 200 < word_count < 800 else "could be optimized"} ({word_count} words)',
-            'Clear structure and organization' if word_count > 100 else 'Basic information provided',
-            'Contact information included' if has_email or has_phone else 'Professional format used'
-        ],
-        'weaknesses': [
-            'Add quantifiable achievements (e.g., "Increased efficiency by 40%")' if not has_metrics else 'Could include more specific metrics',
-            'Include relevant projects with links' if not has_projects else 'Add more technical details to projects',
-            f'Missing {"email" if not has_email else "phone number"}' if not (has_email and has_phone) else 'Consider adding more keywords for ATS systems'
-        ],
-        'suggestions': [
-            'Add 2-3 strong projects with GitHub links and tech stack',
-            'Include metrics and numbers (e.g., "Built app used by 500+ users")',
-            'Add a professional summary at the top (3-4 lines)',
-            f'Optimize for {job_role} role by including relevant keywords',
-            'Ensure all contact information is current and professional'
-        ]
-    }
+    try:
+        client = InferenceClient(token="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")  # Replace with your token
+        
+        prompt = f"""You are an expert technical recruiter. Analyze this resume for a {job_role} position and provide structured feedback.
+
+Resume text:
+{resume_text[:1500]}
+
+Provide your analysis ONLY as valid JSON with no other text:
+{{
+  "score": <number 0-10>,
+  "strengths": ["strength 1", "strength 2", "strength 3"],
+  "weaknesses": ["weakness 1", "weakness 2", "weakness 3"],
+  "suggestions": ["specific tip 1", "specific tip 2", "specific tip 3", "specific tip 4", "specific tip 5"]
+}}"""
+
+        response = client.text_generation(
+            prompt,
+            model="mistralai/Mistral-7B-Instruct-v0.2",
+            max_new_tokens=800,
+            temperature=0.7
+        )
+        
+        # Try to extract JSON from response
+        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response, re.DOTALL)
+        
+        if json_match:
+            result = json.loads(json_match.group())
+            # Validate the structure
+            if all(key in result for key in ['score', 'strengths', 'weaknesses', 'suggestions']):
+                return result
+        
+        # If AI parsing fails, use rule-based
+        print("AI response couldn't be parsed, using rule-based analysis")
+        return rule_based_analysis(resume_text, job_role)
+        
+    except Exception as e:
+        print(f"AI analysis error: {e}, falling back to rule-based")
+        return rule_based_analysis(resume_text, job_role)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
