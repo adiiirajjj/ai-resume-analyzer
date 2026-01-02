@@ -68,8 +68,8 @@ Future Enhancements
 Author
 
   Aditya Raj
-- GitHub: [@yourusername](https://github.com/adiiirajjj)
-- LinkedIn: [Your Profile](https://linkedin.com/in/ml-ops-aditya-raj/)
+- GitHub: [adiiirajjj](https://github.com/adiiirajjj)
+- LinkedIn: [Aditya Raj](https://linkedin.com/in/ml-ops-aditya-raj/)
 
 License
 
